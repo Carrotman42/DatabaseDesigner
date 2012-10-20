@@ -34,6 +34,7 @@ public class Processor extends AbstractProcessor {
                 StringBuilder tableList = new StringBuilder();
                 
                 for (Element elt : roundEnv.getRootElements()) {
+                    // A class must be marked with @Table in order to be considered a Table
                     if (elt.getAnnotation(Table.class) == null) {
                         continue;
                     }

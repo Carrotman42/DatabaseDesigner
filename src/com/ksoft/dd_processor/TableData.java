@@ -6,14 +6,23 @@ import java.util.Iterator;
 
 import com.ksoft.dd.Column;
 
+/**
+ * Represents information about a class marked with @Table. This class will hold information about a
+ * specific sql table.
+ * 
+ * @author Kevin
+ * 
+ */
 public class TableData {
     String name;
     
     private static class NameColumnPair {
         /**
          * Represents the actual name of a column. This is needed because when getColumnIndex is
-         * called it doesn't do case insensitive matching, so the actual column name needs to
-         * exactly match the CREATE TABLE script.
+         * called (in Android) it doesn't do case insensitive matching, so the actual column name
+         * needs to exactly match the CREATE TABLE script. This is required for Android programming
+         * but doesn't affect correctness in any other SQLite context where the method for getting
+         * the index of a column is case insensitive.
          */
         public final String actualName;
         
@@ -37,7 +46,16 @@ public class TableData {
         return null != cols.put(name.toUpperCase(), new NameColumnPair(name, info));
     }
     
-    public void writeCreateSQL(PrintWriter wr) {
+    /**
+     * Writes out the SQL for creating a table.<br>
+     * <br>
+     * 
+     * This method assumes that the table is valid. This should only be called in a context where
+     * the Processor knows the class represents a valid table.
+     * 
+     * @param wr
+     */
+    void writeCreateSQL(PrintWriter wr) {
         // Assume the table is valid
         wr.append("CREATE TABLE ").append(name).append('(');
         
@@ -54,7 +72,17 @@ public class TableData {
         wr.append(')');
     }
     
-    public void writeColumnArray(PrintWriter wr) {
+    /**
+     * Writes out an array of column names. Sometimes it is useful to have a list of all of the
+     * columns in a specific table, and it's simple to provide that.<br>
+     * <br>
+     * 
+     * This method assumes that the table is valid. This should only be called in a context where
+     * the Processor knows the class represents a valid table.
+     * 
+     * @param wr
+     */
+    void writeColumnArray(PrintWriter wr) {
         // Assume the table is valid
         
         Iterator<NameColumnPair> cs = cols.values().iterator();
@@ -73,7 +101,7 @@ public class TableData {
         wr.append("};\n");
     }
     
-    // See http://www.sqlite.org/lang_createtable.html
+    /** See http://www.sqlite.org/lang_createtable.html */
     private void writeColumn(PrintWriter b, String name, Column c) {
         b.append(name).append(' ').append(c.type().name());
         
@@ -89,9 +117,9 @@ public class TableData {
         if (c.foreignKeyTable().length() > 0) {
             b.append(" REFERENCES ").append(c.foreignKeyTable());
             
-            //Add the foreign key column only if it is non empty.
-            if(!c.foreignKeyColumn().isEmpty()){
-            	b.append(String.format("(%s)", c.foreignKeyColumn()));
+            // Add the foreign key column only if it is non empty.
+            if (!c.foreignKeyColumn().isEmpty()) {
+                b.append('(').append(c.foreignKeyColumn()).append(')');
             }
             
             b.append(" ON DELETE ").append(c.onDelete().getSqlRepresentation());
